@@ -2,6 +2,7 @@ services:
   postgres:
     container_name: tictactoe-postgres
     image: postgres:16-alpine
+    platform: linux/amd64
     environment:
       POSTGRES_DB: nakama
       POSTGRES_PASSWORD: localdb
@@ -19,6 +20,7 @@ services:
 
   nakama:
     container_name: tictactoe-nakama
+    platform: linux/amd64
     build:
       context: ./apps/backend
       dockerfile: Dockerfile
