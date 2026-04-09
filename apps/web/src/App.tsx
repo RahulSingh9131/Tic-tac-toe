@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./hooks/useAuth";
+import { useAuth } from "./hooks/logic/useAuth";
+import { MatchProvider } from "./hooks/logic/MatchProvider";
 import Lobby from "./pages/Lobby";
 import Leaderboard from "./pages/Leaderboard";
 import Game from "./pages/Game";
@@ -18,24 +19,26 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route 
-          path="/" 
-          element={isAuthenticated ? <Navigate to="/lobby" /> : <Login />} 
-        />
-        <Route 
-          path="/lobby" 
-          element={isAuthenticated ? <Lobby /> : <Navigate to="/" />} 
-        />
-        <Route 
-          path="/game" 
-          element={isAuthenticated ? <Game /> : <Navigate to="/" />} 
-        />
-        <Route 
-          path="/leaderboard" 
-          element={isAuthenticated ? <Leaderboard /> : <Navigate to="/" />} 
-        />
-      </Routes>
+      <MatchProvider>
+        <Routes>
+          <Route 
+            path="/" 
+            element={isAuthenticated ? <Navigate to="/lobby" replace /> : <Login />} 
+          />
+          <Route 
+            path="/lobby" 
+            element={isAuthenticated ? <Lobby /> : <Navigate to="/" replace />} 
+          />
+          <Route 
+            path="/game" 
+            element={isAuthenticated ? <Game /> : <Navigate to="/" replace />} 
+          />
+          <Route 
+            path="/leaderboard" 
+            element={isAuthenticated ? <Leaderboard /> : <Navigate to="/" replace />} 
+          />
+        </Routes>
+      </MatchProvider>
     </BrowserRouter>
   );
 }

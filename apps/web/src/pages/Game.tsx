@@ -1,9 +1,9 @@
-import { useMatch } from "@/hooks/useMatch";
+import { useMatch } from "@/hooks/logic/MatchProvider";
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import GameBoard from "@/components/GameBoard";
-import { ArrowLeft, User, RotateCcw, Swords } from "lucide-react";
+import { ArrowLeft, User, Swords } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,16 @@ export default function Game() {
   }
 
   const { board, turn, players, game_over, winner, turn_timer } = matchState;
+  
+  if (!board || !Array.isArray(board)) {
+    console.error("Board is invalid:", board);
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
+        <div className="text-xl font-bold">Invalid Board Data Received</div>
+        <pre className="p-4 bg-muted rounded">{JSON.stringify(matchState, null, 2)}</pre>
+      </div>
+    );
+  }
   const isMyTurn = turn === session?.user_id;
   const myMark = players[session?.user_id || ""]?.mark;
   

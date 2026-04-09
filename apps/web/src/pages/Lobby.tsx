@@ -1,14 +1,16 @@
 import { Link } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
-import { Trophy, Swords, Timer, UserCircle } from "lucide-react";
-import { useMatch } from "@/hooks/useMatch";
+import { Trophy, Swords, Timer, UserCircle, LogOut } from "lucide-react";
+import { useMatch } from "@/hooks/logic/MatchProvider";
+import { useAccount } from "@/hooks/queries/useAccount";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Lobby() {
-  const { session } = useAuthStore();
+  const { session, logout } = useAuthStore();
   const { joinMatchmaker, match } = useMatch();
+  const { data: account } = useAccount();
   const [searching, setSearching] = useState(false);
   const navigate = useNavigate();
 
@@ -28,14 +30,34 @@ export default function Lobby() {
 
   return (
     <div className="min-h-screen bg-muted/20 flex flex-col">
-      <nav className="border-b bg-background px-6 py-4 flex items-center justify-between">
-        <div className="text-xl font-black tracking-tighter uppercase">Tic-Tac-Toe</div>
-        <div className="flex items-center gap-4">
-          <div className="text-right hidden sm:block">
-            <div className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Player</div>
-            <div className="text-sm font-black">{session?.username}</div>
+      <nav className="bg-background border-b px-6 py-4 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md bg-background/80">
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+            <Swords className="w-5 h-5 text-primary" />
           </div>
-          <UserCircle className="w-8 h-8 text-primary" />
+          <div className="text-xl font-black tracking-tighter uppercase italic">Tic-Tac-Toe</div>
+        </div>
+        <div className="flex items-center gap-6">
+          <div className="text-right hidden sm:block">
+            <div className="text-[10px] font-black uppercase text-muted-foreground tracking-widest opacity-60">Combatant</div>
+            <div className="text-sm font-black flex items-center gap-2">
+              {session?.username}
+              {account?.custom_id && (
+                <span className="text-[10px] bg-yellow-500/10 text-yellow-600 px-2 py-0.5 rounded-full border border-yellow-500/20">
+                  {account.wallet || 0} Wins
+                </span>
+              )}
+            </div>
+          </div>
+          <UserCircle className="w-10 h-10 text-primary p-2 bg-primary/5 rounded-2xl" />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => logout()}
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl"
+          >
+            <LogOut className="w-5 h-5" />
+          </Button>
         </div>
       </nav>
 

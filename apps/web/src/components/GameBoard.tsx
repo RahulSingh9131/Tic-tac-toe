@@ -16,10 +16,10 @@ export default function GameBoard({ board, onMove, disabled }: GameBoardProps) {
             onClick={() => onMove(rowIndex, colIndex)}
             disabled={disabled || cell !== 0}
             className={cn(
-              "flex items-center justify-center text-4xl font-bold bg-secondary/50 rounded-lg hover:bg-secondary transition-colors aspect-square",
+              "flex items-center justify-center text-5xl font-black bg-muted/40 rounded-2xl hover:bg-muted/60 transition-all border-4 border-muted/20 aspect-square shadow-lg min-w-[80px] min-h-[80px] sm:min-w-[120px] sm:min-h-[120px]",
               cell === 1 && "text-blue-500",
               cell === 2 && "text-rose-500",
-              (disabled || cell !== 0) && "cursor-not-allowed"
+              (disabled || cell !== 0) && "cursor-not-allowed grayscale-[0.5] opacity-50"
             )}
           >
             {cell === 1 ? "X" : cell === 2 ? "O" : ""}
