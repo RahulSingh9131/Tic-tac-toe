@@ -1,12 +1,23 @@
 import { useLeaderboard } from "@/hooks/queries/useLeaderboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Trophy, RefreshCcw } from "lucide-react";
+import { ArrowLeft, RefreshCcw, Swords, Skull, Flame } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+
+const TABS = [
+  { id: "wins", label: "Wins", icon: Swords, color: "text-blue-500", bg: "bg-blue-500/10" },
+  { id: "losses", label: "Losses", icon: Skull, color: "text-rose-500", bg: "bg-rose-500/10" },
+  { id: "win_streaks", label: "Streaks", icon: Flame, color: "text-orange-500", bg: "bg-orange-500/10" },
+];
 
 export default function Leaderboard() {
   const navigate = useNavigate();
-  const { data: records, isLoading, error, refetch } = useLeaderboard("wins", 10);
+  const [activeTab, setActiveTab] = useState("wins");
+  const { data: records, isLoading, error, refetch } = useLeaderboard(activeTab, 10);
+
+  const currentTab = TABS.find(t => t.id === activeTab)!;
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-8 space-y-6">
@@ -25,13 +36,32 @@ export default function Leaderboard() {
         </Button>
       </div>
 
-      <header className="text-center space-y-2 pb-4">
-        <div className="inline-flex p-3 rounded-full bg-yellow-500/10 mb-2">
-          <Trophy className="w-8 h-8 text-yellow-500" />
+      <header className="text-center space-y-2 pb-2">
+        <div className={cn("inline-flex p-3 rounded-full mb-2 transition-colors", currentTab.bg)}>
+          <currentTab.icon className={cn("w-8 h-8", currentTab.color)} />
         </div>
         <h1 className="text-3xl font-bold tracking-tight">Global Rankings</h1>
-        <p className="text-muted-foreground">Top players by total wins</p>
+        <p className="text-muted-foreground">Top players by {currentTab.label.toLowerCase()}</p>
       </header>
+
+      {/* Custom Tabs */}
+      <div className="flex p-1 bg-muted rounded-xl gap-1">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold rounded-lg transition-all",
+              activeTab === tab.id 
+                ? "bg-background text-foreground shadow-sm" 
+                : "text-muted-foreground hover:bg-background/50"
+            )}
+          >
+            <tab.icon className={cn("w-4 h-4", activeTab === tab.id && tab.color)} />
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       <Card>
         <CardContent className="p-0">
@@ -62,9 +92,9 @@ export default function Leaderboard() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                   <div className="flex items-center gap-2">
                     <span className="text-2xl font-black text-primary">{record.score}</span>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase pt-1">Wins</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase pt-1">{activeTab.replace("win_streaks", "Streak").replace("wins", "Wins").replace("losses", "Losses")}</span>
                   </div>
                 </div>
               ))}

@@ -53,7 +53,7 @@ export default function Game() {
           <div className={cn(
             "px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-500",
             isMyTurn 
-              ? "bg-primary text-primary-foreground ring-4 ring-primary/20" 
+              ? "bg-primary text-primary-foreground ring-4 ring-primary/20 animate-pulse" 
               : "bg-muted text-muted-foreground"
           )}>
             {isMyTurn ? "Your Action" : "Waiting for Opponent"}

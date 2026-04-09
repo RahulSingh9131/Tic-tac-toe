@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"tictactoe/backend/leaderboard"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 )
@@ -22,7 +23,7 @@ func (m *MatchHandler) MatchInit(ctx context.Context, logger runtime.Logger, db 
 	}
 
 	tickRate := 10 // 10 ticks per second
-	label := ""    // Match labels can be used for filtering
+	label := ""
 
 	return state, tickRate, label
 }
@@ -60,6 +61,7 @@ func (m *MatchHandler) MatchJoin(ctx context.Context, logger runtime.Logger, db 
 		// Send current state to everyone
 		msg, _ := json.Marshal(s)
 		dispatcher.BroadcastMessage(OpCodeGameStart, msg, nil, nil, true)
+		logger.Info("Match %s: Player %s joined. Total players: %d", ctx.Value(runtime.RUNTIME_CTX_MATCH_ID), p.GetUserId(), len(s.Players))
 	}
 
 	return s
@@ -79,6 +81,10 @@ func (m *MatchHandler) MatchLeave(ctx context.Context, logger runtime.Logger, db
 				s.Winner = id
 			}
 
+			UpdateLeaderboards(ctx, logger, nk, s)
+
+			logger.Info("Match %s: Player %s left. Ending match. Winner: %s", ctx.Value(runtime.RUNTIME_CTX_MATCH_ID), p.GetUserId(), s.Winner)
+
 			msg, _ := json.Marshal(map[string]string{"reason": "opponent_left"})
 			dispatcher.BroadcastMessage(OpCodeOpponentLeft, msg, nil, nil, true)
 		}
@@ -95,31 +101,33 @@ func (m *MatchHandler) MatchLoop(ctx context.Context, logger runtime.Logger, db 
 	}
 
 	// Handle Messages
-	for _, m := range messages {
-		switch m.GetOpCode() {
+	for _, mData := range messages {
+		switch mData.GetOpCode() {
 		case OpCodePlayerMove:
 			var move struct {
 				Row int `json:"row"`
 				Col int `json:"col"`
 			}
-			if err := json.Unmarshal(m.GetData(), &move); err != nil {
+			if err := json.Unmarshal(mData.GetData(), &move); err != nil {
 				logger.Error("Failed to unmarshal move: %v", err)
 				continue
 			}
 
-			if err := ValidateMove(s, m.GetUserId(), move.Row, move.Col); err != nil {
+			if err := ValidateMove(s, mData.GetUserId(), move.Row, move.Col); err != nil {
 				errMsg, _ := json.Marshal(map[string]string{"reason": err.Error()})
-				dispatcher.BroadcastMessage(OpCodeInvalidMove, errMsg, []runtime.Presence{m}, nil, true)
+				dispatcher.BroadcastMessage(OpCodeInvalidMove, errMsg, []runtime.Presence{mData}, nil, true)
 				continue
 			}
 
-			ApplyMove(s, m.GetUserId(), move.Row, move.Col)
+			ApplyMove(s, mData.GetUserId(), move.Row, move.Col)
 
 			// Broadcast Update
 			update, _ := json.Marshal(s)
 			dispatcher.BroadcastMessage(OpCodeStateUpdate, update, nil, nil, true)
 
 			if s.GameOver {
+				logger.Info("Match %s: Game Over via move. Winner: %s", ctx.Value(runtime.RUNTIME_CTX_MATCH_ID), s.Winner)
+				UpdateLeaderboards(ctx, logger, nk, s)
 				gameOverMsg, _ := json.Marshal(s)
 				dispatcher.BroadcastMessage(OpCodeGameOver, gameOverMsg, nil, nil, true)
 			}
@@ -127,7 +135,7 @@ func (m *MatchHandler) MatchLoop(ctx context.Context, logger runtime.Logger, db 
 	}
 
 	// Handle Timers (if timed mode)
-	if s.Mode == "timed" && !s.GameOver {
+	if s.Mode == "timed" && !s.GameOver && s.Turn != "" {
 		if tick%int64(s.TickRate) == 0 { // Once per second
 			s.TurnTimer--
 
@@ -141,10 +149,14 @@ func (m *MatchHandler) MatchLoop(ctx context.Context, logger runtime.Logger, db 
 					}
 				}
 
+				logger.Info("Match %s: Game Over via timeout. Loser (Timed out): %s", ctx.Value(runtime.RUNTIME_CTX_MATCH_ID), s.Turn)
+				UpdateLeaderboards(ctx, logger, nk, s)
 				gameOverMsg, _ := json.Marshal(s)
 				dispatcher.BroadcastMessage(OpCodeGameOver, gameOverMsg, nil, nil, true)
 			} else {
-				// Optional: broadcast timer update if needed frequently
+				// Broadcast timer update every second
+				update, _ := json.Marshal(s)
+				dispatcher.BroadcastMessage(OpCodeStateUpdate, update, nil, nil, true)
 			}
 		}
 	}
@@ -153,11 +165,31 @@ func (m *MatchHandler) MatchLoop(ctx context.Context, logger runtime.Logger, db 
 }
 
 func (m *MatchHandler) MatchTerminate(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, graceSeconds int) interface{} {
-	// Final cleanup or stats recording could happen here
-	// But it's better to do via MatchTerminate or MatchLoop's final state
 	return state
 }
 
 func (m *MatchHandler) MatchSignal(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, data string) (interface{}, string) {
 	return state, ""
+}
+
+// UpdateLeaderboards helper to persist results
+func UpdateLeaderboards(ctx context.Context, logger runtime.Logger, nk runtime.NakamaModule, s *MatchState) {
+	if !s.GameOver || s.Winner == "" || s.Winner == "draw" {
+		return
+	}
+
+	winnerID := s.Winner
+	loserID := ""
+
+	// Find the loser
+	for id := range s.Players {
+		if id != winnerID {
+			loserID = id
+			break
+		}
+	}
+
+	if loserID != "" {
+		leaderboard.RecordMatchResult(ctx, logger, nk, winnerID, loserID)
+	}
 }

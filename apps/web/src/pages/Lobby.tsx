@@ -1,16 +1,18 @@
-import { Link } from "react-router-dom";
-import { useAuthStore } from "@/store/authStore";
-import { Button } from "@/components/ui/button";
+import { useLeaderboard } from "@/hooks/queries/useLeaderboard";
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Trophy, Swords, Timer, UserCircle, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/store/authStore";
 import { useMatch } from "@/hooks/logic/MatchProvider";
 import { useAccount } from "@/hooks/queries/useAccount";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 export default function Lobby() {
   const { session, logout } = useAuthStore();
   const { joinMatchmaker, match } = useMatch();
   const { data: account } = useAccount();
+  const { data: winsRecords } = useLeaderboard("wins", 1, session?.user_id ? [session.user_id] : undefined);
+  const myWins = winsRecords?.[0]?.score || 0;
   const [searching, setSearching] = useState(false);
   const navigate = useNavigate();
 
@@ -44,7 +46,7 @@ export default function Lobby() {
               {session?.username}
               {account?.custom_id && (
                 <span className="text-[10px] bg-yellow-500/10 text-yellow-600 px-2 py-0.5 rounded-full border border-yellow-500/20">
-                  {account.wallet || 0} Wins
+                  {myWins} Wins
                 </span>
               )}
             </div>
@@ -127,13 +129,32 @@ export default function Lobby() {
         </div>
 
         {searching && (
-          <div className="max-w-md mx-auto p-6 bg-primary/5 border-2 border-primary/20 rounded-[30px] flex flex-col items-center justify-center gap-4 animate-in fade-in zoom-in duration-300">
-             <div className="flex gap-2">
-                <span className="w-3 h-3 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-                <span className="w-3 h-3 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
-                <span className="w-3 h-3 rounded-full bg-primary animate-bounce" />
-             </div>
-             <span className="font-black text-xs tracking-[0.3em] uppercase text-primary">Searching for Opponent...</span>
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-500">
+            <div className="max-w-md w-full bg-background border-4 border-primary/20 rounded-[40px] p-12 text-center space-y-8 shadow-[0_0_100px_rgba(0,0,0,0.2)]">
+               <div className="relative flex items-center justify-center">
+                  <div className="w-32 h-32 border-4 border-primary/10 border-t-primary rounded-full animate-spin" />
+                  <Swords className="absolute w-12 h-12 text-primary animate-pulse" />
+               </div>
+               
+               <div className="space-y-2">
+                 <h2 className="text-3xl font-black uppercase italic tracking-tighter">Searching</h2>
+                 <p className="text-muted-foreground font-medium">Quantizing battlefield parameters...</p>
+               </div>
+
+               <div className="flex justify-center gap-3">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce" />
+               </div>
+
+               <Button 
+                variant="ghost" 
+                onClick={() => setSearching(false)} 
+                className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground hover:text-destructive"
+               >
+                 Abort Sequence
+               </Button>
+            </div>
           </div>
         )}
       </main>
