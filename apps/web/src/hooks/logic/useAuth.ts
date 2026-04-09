@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useAuthStore } from "@/store/authStore";
-import { authenticateDevice } from "@/api/nakama";
+import { useAuthStore } from "../../store/authStore";
+import { authenticateDevice } from "../../api/nakama";
 import { Session } from "@heroiclabs/nakama-js";
 
 export const useAuth = () => {

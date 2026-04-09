@@ -55,11 +55,11 @@ func (m *MatchHandler) MatchJoin(ctx context.Context, logger runtime.Logger, db 
 
 		if len(s.Players) == 2 {
 			s.Turn = s.TurnOrder[0] // X starts
-
-			// Broadcast Game Start
-			msg, _ := json.Marshal(s)
-			dispatcher.BroadcastMessage(OpCodeGameStart, msg, nil, nil, true)
 		}
+
+		// Send current state to everyone
+		msg, _ := json.Marshal(s)
+		dispatcher.BroadcastMessage(OpCodeGameStart, msg, nil, nil, true)
 	}
 
 	return s

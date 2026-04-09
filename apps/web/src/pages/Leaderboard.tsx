@@ -1,29 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
-import { nakamaClient } from "@/api/nakama";
+import { useLeaderboard } from "@/hooks/queries/useLeaderboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Trophy, RefreshCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/store/authStore";
 
 export default function Leaderboard() {
   const navigate = useNavigate();
-  const { session } = useAuthStore();
-
-  const { data: records, isLoading, error, refetch } = useQuery({
-    queryKey: ["leaderboard", "wins"],
-    queryFn: async () => {
-      if (!session) throw new Error("No session");
-      const result = await nakamaClient.listLeaderboardRecords(
-        session,
-        "wins",
-        undefined,
-        10
-      );
-      return result.records || [];
-    },
-    enabled: !!session,
-  });
+  const { data: records, isLoading, error, refetch } = useLeaderboard("wins", 10);
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-8 space-y-6">
