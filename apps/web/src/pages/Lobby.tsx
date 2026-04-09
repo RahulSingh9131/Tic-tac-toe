@@ -1,16 +1,18 @@
-import { Link } from "react-router-dom";
-import { useAuthStore } from "@/store/authStore";
-import { Button } from "@/components/ui/button";
+import { useLeaderboard } from "@/hooks/queries/useLeaderboard";
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Trophy, Swords, Timer, UserCircle, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/store/authStore";
 import { useMatch } from "@/hooks/logic/MatchProvider";
 import { useAccount } from "@/hooks/queries/useAccount";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 export default function Lobby() {
   const { session, logout } = useAuthStore();
   const { joinMatchmaker, match } = useMatch();
   const { data: account } = useAccount();
+  const { data: winsRecords } = useLeaderboard("wins", 1, session?.user_id ? [session.user_id] : undefined);
+  const myWins = winsRecords?.[0]?.score || 0;
   const [searching, setSearching] = useState(false);
   const navigate = useNavigate();
 
@@ -44,7 +46,7 @@ export default function Lobby() {
               {session?.username}
               {account?.custom_id && (
                 <span className="text-[10px] bg-yellow-500/10 text-yellow-600 px-2 py-0.5 rounded-full border border-yellow-500/20">
-                  {account.wallet || 0} Wins
+                  {myWins} Wins
                 </span>
               )}
             </div>

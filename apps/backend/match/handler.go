@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"tictactoe/backend/leaderboard"
 
 	"github.com/heroiclabs/nakama-common/runtime"
 )
@@ -79,12 +80,36 @@ func (m *MatchHandler) MatchLeave(ctx context.Context, logger runtime.Logger, db
 				s.Winner = id
 			}
 
+			UpdateLeaderboards(ctx, logger, nk, s)
+
 			msg, _ := json.Marshal(map[string]string{"reason": "opponent_left"})
 			dispatcher.BroadcastMessage(OpCodeOpponentLeft, msg, nil, nil, true)
 		}
 	}
 
 	return s
+}
+
+// UpdateLeaderboards helper to persist results
+func UpdateLeaderboards(ctx context.Context, logger runtime.Logger, nk runtime.NakamaModule, s *MatchState) {
+	if !s.GameOver || s.Winner == "" || s.Winner == "draw" {
+		return
+	}
+
+	winnerID := s.Winner
+	loserID := ""
+
+	// Find the loser
+	for id := range s.Players {
+		if id != winnerID {
+			loserID = id
+			break
+		}
+	}
+
+	if loserID != "" {
+		leaderboard.RecordMatchResult(ctx, logger, nk, winnerID, loserID)
+	}
 }
 
 func (m *MatchHandler) MatchLoop(ctx context.Context, logger runtime.Logger, db *sql.DB, nk runtime.NakamaModule, dispatcher runtime.MatchDispatcher, tick int64, state interface{}, messages []runtime.MatchData) interface{} {
@@ -120,6 +145,7 @@ func (m *MatchHandler) MatchLoop(ctx context.Context, logger runtime.Logger, db 
 			dispatcher.BroadcastMessage(OpCodeStateUpdate, update, nil, nil, true)
 
 			if s.GameOver {
+				UpdateLeaderboards(ctx, logger, nk, s)
 				gameOverMsg, _ := json.Marshal(s)
 				dispatcher.BroadcastMessage(OpCodeGameOver, gameOverMsg, nil, nil, true)
 			}
@@ -127,7 +153,7 @@ func (m *MatchHandler) MatchLoop(ctx context.Context, logger runtime.Logger, db 
 	}
 
 	// Handle Timers (if timed mode)
-	if s.Mode == "timed" && !s.GameOver {
+	if s.Mode == "timed" && !s.GameOver && s.Turn != "" {
 		if tick%int64(s.TickRate) == 0 { // Once per second
 			s.TurnTimer--
 
@@ -141,10 +167,13 @@ func (m *MatchHandler) MatchLoop(ctx context.Context, logger runtime.Logger, db 
 					}
 				}
 
+				UpdateLeaderboards(ctx, logger, nk, s)
 				gameOverMsg, _ := json.Marshal(s)
 				dispatcher.BroadcastMessage(OpCodeGameOver, gameOverMsg, nil, nil, true)
 			} else {
-				// Optional: broadcast timer update if needed frequently
+				// Broadcast timer update every second
+				update, _ := json.Marshal(s)
+				dispatcher.BroadcastMessage(OpCodeStateUpdate, update, nil, nil, true)
 			}
 		}
 	}
