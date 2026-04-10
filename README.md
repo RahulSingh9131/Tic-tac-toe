@@ -88,7 +88,7 @@ VITE_NAKAMA_SERVER_KEY=defaultkey
 
 Since this is a real-time multiplayer game, you need at least two players to start a match:
 
-1. **Open two browser windows** (or one normal and one Incognito/Private) at `http://localhost:5173`.
+1. **Open two browser windows** (or one normal and one Incognito/Private) at `https://tic-tac-toe-web-one.vercel.app/`.
 2. **Login/Join** in both windows (they will automatically receive unique device IDs).
 3. **In Window A**: Click "Engage" on Classic or Blitz mode.
 4. **In Window B**: Click the same mode.
@@ -103,8 +103,8 @@ The project is designed to be deployed using Docker:
 1. **Backend**: The `Dockerfile` in the root (or referenced in `docker-compose.yml`) builds the Go plugin and bundles it with the Nakama server image.
 2. **Frontend**: Build the static assets using `pnpm build` in `apps/web` and serve them via Nginx or a CDN (Vercel/Netlify).
 
-For cloud deployment (AWS/GCP):
-- Deploy the Docker container to a managed service like **AWS ECS** or **Google Cloud Run**.
+For cloud deployment (AWS/GCP/Railway):
+- Deploy the Docker container to a managed service like **AWS ECS** or **Google Cloud Run** or **Railway**.
 - Ensure the PostgreSQL database is accessible to the Nakama container.
 - Map ports `7349` (gRPC), `7350` (API/WS), and `7351` (Console).
 
