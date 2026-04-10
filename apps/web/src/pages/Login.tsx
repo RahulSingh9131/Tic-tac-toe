@@ -37,29 +37,16 @@ export default function Login() {
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <Button 
-            className="w-full h-12 gap-3" 
+            className="w-full h-14 gap-3 text-lg font-black uppercase tracking-widest bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 rounded-2xl" 
             onClick={handleDeviceLogin} 
             disabled={loading}
           >
             <Smartphone className="w-5 h-5" />
-            Play as Guest (Device ID)
+            {loading ? "Initializing..." : "Engage Protocol"}
           </Button>
           
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or (Experimental)</span>
-            </div>
-          </div>
-
-          <Button variant="outline" className="w-full h-12 gap-3" disabled>
-            Sign in with Email
-          </Button>
-          
-          <p className="text-[10px] text-center text-muted-foreground pt-4">
-            By playing, you agree to our terms of service.
+          <p className="text-[10px] text-center text-muted-foreground pt-4 uppercase tracking-[0.2em] font-black opacity-50">
+            Secure Device Authentication Enabled
           </p>
         </CardContent>
       </Card>
