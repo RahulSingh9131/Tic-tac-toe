@@ -1,5 +1,8 @@
 # ⚔️ Multiplayer Tic-Tac-Toe (Blitz Edition)
 
+**Live Application**: [https://tic-tac-toe-web-one.vercel.app](https://tic-tac-toe-web-one.vercel.app)
+**Nakama Server Endpoint**: `https://tic-tac-toe-production-8b42.up.railway.app`
+
 A production-ready, server-authoritative multiplayer Tic-Tac-Toe game built with **Nakama (Go)** and **React (TypeScript)**. 
 
 ## 🚀 Key Features
